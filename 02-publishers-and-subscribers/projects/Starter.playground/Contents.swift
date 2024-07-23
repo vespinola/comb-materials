@@ -95,6 +95,35 @@ example(of: "assign(to:)") {
     .assign(to: &object.$value)
 }
 
+example(of: "Custom Subscriber") {
+  let publisher = (1...6).publisher
+//  let publisher = ["A", "B", "C", "D", "E", "F"].publisher
+
+  final class IntSubscriber: Subscriber {
+    func receive(subscription: any Subscription) {
+      subscription.request(.max(3))
+    }
+    
+    func receive(_ input: Int) -> Subscribers.Demand {
+      print("Received value", input)
+      return .none
+//      return .unlimited
+//      return .max(1)
+    }
+    
+    func receive(completion: Subscribers.Completion<Never>) {
+      print("Received completion", completion)
+    }
+    
+    typealias Input = Int
+    typealias Failure = Never
+  }
+
+  let subscriber = IntSubscriber()
+
+  publisher.subscribe(subscriber)
+}
+
 /// Copyright (c) 2023 Kodeco Inc.
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
