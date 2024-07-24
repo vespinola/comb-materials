@@ -124,6 +124,111 @@ example(of: "Custom Subscriber") {
   publisher.subscribe(subscriber)
 }
 
+example(of: "Future") {
+  func futureIncrement(
+    integer: Int,
+    afterDelay delay: TimeInterval
+  ) -> Future<Int, Never> {
+    Future<Int, Never> { promise in
+      print("Original")
+      DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+        promise(.success(integer + 1))
+      }
+    }
+  }
+
+  let future = futureIncrement(integer: 1, afterDelay: 3)
+
+  future
+    .sink {
+      print($0)
+    } receiveValue: {
+      print($0)
+    }
+    .store(in: &subscriptions)
+
+  future
+    .sink(receiveCompletion: { print("Second", $0) },
+          receiveValue: { print("Second", $0) })
+    .store(in: &subscriptions)
+
+}
+
+example(of: "PassthroughSubject") {
+  enum MyError: Error {
+    case test
+  }
+
+  final class StringSubscriber: Subscriber {
+    func receive(subscription: any Subscription) {
+      subscription.request(.max(2))
+    }
+    
+    func receive(_ input: String) -> Subscribers.Demand {
+      print("Received value", input)
+
+      return input == "World" ? .max(1) : .none
+    }
+    
+    func receive(completion: Subscribers.Completion<MyError>) {
+      print("Received completion", completion)
+    }
+    
+    typealias Input = String
+    typealias Failure = MyError
+  }
+
+  let subscriber = StringSubscriber()
+
+  let subject = PassthroughSubject<String, MyError>()
+
+  subject.subscribe(subscriber)
+
+  let subscription = subject
+    .sink { completion in
+      print("Received completion (sink)", completion)
+    } receiveValue: { value in
+      print("Received value (sink)", value)
+    }
+
+  subject.send("Hello")
+  subject.send("World")
+
+  subscription.cancel()
+
+  subject.send("Still there?")
+
+  subject.send(completion: .failure(MyError.test))
+  subject.send(completion: .finished)
+  subject.send("How about another one?")
+}
+
+example(of: "CurrentValueSubject") {
+  var subscriptions = Set<AnyCancellable>()
+
+  let subject = CurrentValueSubject<Int, Never>(0)
+
+  subject
+    .print()
+    .sink(receiveValue: { print($0) })
+    .store(in: &subscriptions)
+
+  subject.send(1)
+  subject.send(2)
+
+  print(subject.value)
+
+  subject.value = 3
+  print(subject.value)
+
+  subject
+    .print()
+    .sink(receiveValue: { print("Second subscription", $0) })
+    .store(in: &subscriptions)
+
+  subject.send(completion: .finished)
+}
+
 /// Copyright (c) 2023 Kodeco Inc.
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
