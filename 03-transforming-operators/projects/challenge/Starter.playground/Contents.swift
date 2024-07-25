@@ -27,7 +27,6 @@ example(of: "Create a phone number lookup") {
       .filter { $0.key.contains(phoneNumber.lowercased()) }
       .map { $0.value }
       .first
-
     return converted
   }
 
@@ -58,8 +57,26 @@ example(of: "Create a phone number lookup") {
   
   let input = PassthroughSubject<String, Never>()
   
-  <#Add your code here#>
-  
+//  input
+//    .eraseToAnyPublisher()
+//    .compactMap(convert(phoneNumber:))
+//    .replaceNil(with: 0)
+//    .collect()
+//    .map(format(digits:))
+//    .map(dial(phoneNumber:))
+//    .sink {
+//      print($0)
+//    }
+//    .store(in: &subscriptions)
+
+  input
+    .map(convert)
+    .replaceNil(with: 0)
+    .collect(10)
+    .map(format)
+    .map(dial)
+    .sink(receiveValue: { print($0) })
+
   "0!1234567".forEach {
     input.send(String($0))
   }
