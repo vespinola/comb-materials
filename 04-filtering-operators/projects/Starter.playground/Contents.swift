@@ -3,7 +3,98 @@ import Combine
 
 var subscriptions = Set<AnyCancellable>()
 
-<#Add your code here#>
+example(of: "filter") {
+  // 1
+  let numbers = (1...10).publisher
+
+  // 2
+  numbers
+    .filter { $0.isMultiple(of: 3) }
+    .sink(receiveValue: { n in
+      print("\(n) is a multiple of 3!")
+    })
+    .store(in: &subscriptions)
+}
+
+example(of: "removeDuplicates") {
+  // 1
+  let words = "hey hey there! want to listen to mister mister ?"
+    .components(separatedBy: " ")
+    .publisher
+  // 2
+  words
+    .removeDuplicates()
+    .sink(receiveValue: { print($0) })
+    .store(in: &subscriptions)
+}
+
+example(of: "compactMap") {
+  // 1
+  let strings = ["a", "1.24", "3",
+                 "def", "45", "0.23"].publisher
+
+  // 2
+  strings
+    .compactMap { Float($0) }
+    .sink(receiveValue: {
+      // 3
+      print($0)
+    })
+    .store(in: &subscriptions)
+}
+
+example(of: "ignoreOutput") {
+  let numbers = (1...10_000).publisher
+
+  numbers
+    .ignoreOutput()
+    .sink(receiveCompletion: { print("Completed with: \($0)") }, receiveValue: { print($0) })
+    .store(in: &subscriptions)
+}
+
+example(of: "drop(untilOutputFrom:)") {
+  let isReady = PassthroughSubject<Void, Never>()
+  let taps = PassthroughSubject<Int, Never>()
+
+  taps
+    .drop(untilOutputFrom: isReady)
+    .sink(receiveValue: { print($0) })
+    .store(in: &subscriptions)
+
+  (1...5).forEach { n in
+    taps.send(n)
+
+    if n == 3 {
+      isReady.send()
+    }
+  }
+}
+
+example(of: "prefix(untilOutputFrom:)") {
+  // 1
+  let isReady = PassthroughSubject<Void, Never>()
+  let taps = PassthroughSubject<Int, Never>()
+
+  // 2
+  taps
+    .prefix(untilOutputFrom: isReady)
+    .sink(
+      receiveCompletion: { print("Completed with: \($0)") },
+      receiveValue: { print($0) }
+    )
+    .store(in: &subscriptions)
+
+  // 3
+  (1...5).forEach { n in
+    taps.send(n)
+
+    if n == 2 {
+      isReady.send()
+    }
+  }
+}
+
+
 
 /// Copyright (c) 2023 Kodeco Inc.
 ///
