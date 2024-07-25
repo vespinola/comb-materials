@@ -229,6 +229,37 @@ example(of: "CurrentValueSubject") {
   subject.send(completion: .finished)
 }
 
+example(of: "Type Erasure") {
+  let subject = PassthroughSubject<Int, Never>()
+
+  let publisher = subject.eraseToAnyPublisher()
+
+  publisher
+    .sink(receiveValue: {
+      print($0)
+    })
+    .store(in: &subscriptions)
+
+//  publisher.send(0)
+}
+
+example(of: "async/await") {
+  let subject = CurrentValueSubject<Int, Never>(0)
+
+  Task {
+    for await element in subject.values {
+      print("Element: \(element)")
+    }
+
+    print("completed")
+  }
+
+  subject.send(1)
+  subject.send(2)
+  subject.send(3)
+  subject.send(completion: .finished)
+}
+
 /// Copyright (c) 2023 Kodeco Inc.
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
