@@ -92,7 +92,8 @@ struct PhotosView: View {
       model.bindPhotoPicker()
     }
     .onDisappear {
-      
+      // Since you’re exposing the subject to other types, you’d like to explicitly send a completion event in case the view is being dismissed to tear down any external subscriptions.
+      model.selectedPhotosSubject.send(completion: .finished)
     }
   }
 }

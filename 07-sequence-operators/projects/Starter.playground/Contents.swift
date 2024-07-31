@@ -3,7 +3,33 @@ import Combine
 
 var subscriptions = Set<AnyCancellable>()
 
-<#Add your code here#>
+example(of: "min") {
+  // 1
+  let publisher = [1, -50, 246, 0].publisher
+
+  // 2
+  publisher
+    .print("publisher")
+    .min()
+    .sink(receiveValue: { print("Lowest value is \($0)") })
+    .store(in: &subscriptions)
+}
+
+example(of: "min non-comparable") {
+  let publisher = [ "12345", "ab", "hello work" ]
+    .map { Data($0.utf8) }
+    .publisher
+
+  publisher
+    .print("publisher")
+    .min(by: { $0.count < $1.count })
+    .sink { data in
+      let string = String(data: data, encoding: .utf8)!
+      print("Smallest data is \(string), \(data.count) bytes")
+    }
+    .store(in: &subscriptions)
+}
+
 
 /// Copyright (c) 2023 Kodeco Inc.
 ///
